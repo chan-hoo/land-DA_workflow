@@ -149,7 +149,7 @@ Data
    | Orion     | /work/noaa/epic/UFS_Land-DA/inputs               |
    +-----------+--------------------------------------------------+
 
-Users who have difficulty accessing the data on Hera or Orion may download it according to the instructions in :numref:`Section %s <GetDataC>`. Its sub-directories are soft-linked to the ``fix`` directory of the land-DA workflow by the build script ``sorc/app_build.sh`.
+Users who have difficulty accessing the data on Hera or Orion may download it according to the instructions in :numref:`Section %s <GetDataC>`. Its sub-directories are soft-linked to the ``fix`` directory of the land-DA workflow by the build script ``sorc/app_build.sh``.
 
 .. _generate-wflow:
 
@@ -263,17 +263,17 @@ As the experiment progresses, it will generate a number of directories to hold i
     ├── ptmp (<PTMP>)
     │     └── test (<envir>)
     │           └── com
-    │                 ├── landda (<NET>)
-    │                 │     └── vX.Y.Z (<model_ver>)
-    │                 │           └── landda.YYYYMMDD (<RUN>.<PDY>): Directory containing the output files
-    │                 └── output
-    │                       └── logs
-    │                             └── run_<forcing> (<LOGDIR>): Directory containing the log file of the Rocoto workflow
+    │                ├── landda (<NET>)
+    │                │     └── vX.Y.Z (<model_ver>)
+    │                │           └── landda.YYYYMMDD (<RUN>.<PDY>): Directory containing the output files
+    │                └── output
+    │                      └── logs
+    │                            └── run_<forcing> (<LOGDIR>): Directory containing the log file of the Rocoto workflow
     └── tmp (<DATAROOT>)
-          ├── <jobid> (<DATA>): Working directory
-          └── DATA_SHARE
-                ├── YYYYMMDD (<PDY>): Directory containing the intermediate or temporary files
-                └── DATA_RESTART: Directory containing the soft-links to the restart files for the next cycles
+         ├── <jobid> (<DATA>): Working directory
+         └── DATA_SHARE
+               ├── YYYYMMDD (<PDY>): Directory containing the intermediate or temporary files
+               └── DATA_RESTART: Directory containing the soft-links to the restart files for the next cycles
 
 ``<forcing>`` refers to the type of forcing data used (``gswp3`` or ``era5``). Each variable in parentheses and angle brackets (e.g., ``(<VAR>)``) is the name for the directory defined in the file ``land_analysis.yaml``. In the future, this directory structure will be further modified to meet the :nco:`NCO Implementation Standards<>`.
 
