@@ -78,7 +78,7 @@ if [[ ${DAtype} == "letkfoi_snow" ]]; then
 fi
 
 ################################################
-# DETERMINE REQUESTED JEDI TYPE, CONSTRUCT YAMLS
+# Run JEDI
 ################################################
 
 do_DA="YES"
@@ -89,10 +89,20 @@ if [[ $do_DA == "NO" && $do_HOFX == "NO" ]]; then
   exit 0 
 fi
 
+if [[ ! -e Data ]]; then
+  ln -nsf $JEDI_STATICDIR Data 
+fi
+
+if [[ "$GFSv17" == "NO" ]]; then
+  cp ${PARMlandda}/jedi/gfs-land.yaml ${DATA}/gfs-land.yaml
+else
+  cp ${JEDI_INSTALL}/jedi-bundle/fv3-jedi/test/Data/fieldmetadata/gfs_v17-land.yaml ${DATA}/gfs-land.yaml
+fi
+
 mkdir -p output/DA/hofx
+
 # if yaml is specified by user, use that. Otherwise, build the yaml
 if [[ $do_DA == "YES" ]]; then 
-
   if [[ $YAML_DA == "construct" ]];then  # construct the yaml
     cp ${PARMlandda}/jedi/${DAtype}.yaml ${DATA}/letkf_land.yaml
     for obs in "${OBS_TYPES[@]}";
@@ -118,10 +128,24 @@ if [[ $do_DA == "YES" ]]; then
   RESP1=$((RES+1))
   sed -i -e "s/XXREP/${RESP1}/g" letkf_land.yaml
   sed -i -e "s/XXHOFX/false/g" letkf_land.yaml  # do DA
+
+  export pgm="fv3jedi_letkf.x"
+  . prep_step
+  ${MPIEXEC} -n $NPROC_JEDI ${JEDI_EXECDIR}/$pgm letkf_land.yaml >>$pgmout 2>errfile
+  export err=$?; err_chk
+  cp errfile errfile_jedi_letkf
+  if [[ $err != 0 ]]; then
+    echo "JEDI DA failed"
+    exit 10
+  fi
+
+  for itile in {1..6}
+  do
+    cp -p ${DATA}/${FILEDATE}.xainc.sfc_data.tile${itile}.nc ${COMOUT}
+  done
 fi
 
 if [[ $do_HOFX == "YES" ]]; then 
-
   if [[ $YAML_HOFX == "construct" ]];then  # construct the yaml
     cp ${PARMlandda}/jedi/${DAtype}.yaml ${DATA}/hofx_land.yaml
     for obs in "${OBS_TYPES[@]}";
@@ -148,36 +172,6 @@ if [[ $do_HOFX == "YES" ]]; then
   sed -i -e "s/XXREP/${RESP1}/g" hofx_land.yaml
   sed -i -e "s/XXHOFX/true/g" hofx_land.yaml  # do HOFX
 
-fi
-
-if [[ "$GFSv17" == "NO" ]]; then
-  cp ${PARMlandda}/jedi/gfs-land.yaml ${DATA}/gfs-land.yaml
-else
-  cp ${JEDI_INSTALL}/jedi-bundle/fv3-jedi/test/Data/fieldmetadata/gfs_v17-land.yaml ${DATA}/gfs-land.yaml
-fi
-
-################################################
-# RUN JEDI
-################################################
-
-if [[ ! -e Data ]]; then
-  ln -nsf $JEDI_STATICDIR Data 
-fi
-
-echo 'do_landDA: calling fv3-jedi'
-
-if [[ $do_DA == "YES" ]]; then
-  export pgm="fv3jedi_letkf.x"
-  . prep_step
-  ${MPIEXEC} -n $NPROC_JEDI ${JEDI_EXECDIR}/$pgm letkf_land.yaml >>$pgmout 2>errfile
-  export err=$?; err_chk
-  cp errfile errfile_jedi_letkf
-  if [[ $err != 0 ]]; then
-    echo "JEDI DA failed"
-    exit 10
-  fi
-fi 
-if [[ $do_HOFX == "YES" ]]; then
   export pgm="fv3jedi_letkf.x"
   . prep_step
   ${MPIEXEC} -n $NPROC_JEDI ${JEDI_EXECDIR}/$pgm hofx_land.yaml >>$pgmout 2>errfile
@@ -187,51 +181,30 @@ if [[ $do_HOFX == "YES" ]]; then
     echo "JEDI hofx failed"
     exit 10
   fi
-fi 
+fi
 
 ################################################
 # Apply Increment to UFS sfc_data files
 ################################################
 
-if [[ $do_DA == "YES" ]]; then 
+if [[ $do_DA == "YES" && $DAtype == "letkfoi_snow" ]]; then 
+  echo 'add snow increment to sfc_data'
+  # base name of sfc_data files
+  fn_sfc_base="${FILEDATE}.sfc_data.tile"
+  # base name of increment files
+  fn_inc_base="${FILEDATE}.xainc.sfc_data.tile"
 
-  if [[ $DAtype == "letkfoi_snow" ]]; then 
-
-cat << EOF > apply_incr_nml
-&noahmp_snow
- date_str=${YYYY}${MM}${DD}
- hour_str=$HH
- res=$RES
- frac_grid=$GFSv17
- orog_path="$TPATH"
- otype="$TSTUB"
-/
-EOF
-
-    echo 'do_landDA: calling apply snow increment'
-
-    export pgm="apply_incr.exe"
-    . prep_step
-    # (n=6) -> this is fixed, at one task per tile (with minor code change, could run on a single proc). 
-    ${MPIEXEC} -n 6 ${EXEClandda}/$pgm >>$pgmout 2>errfile
-    export err=$?; err_chk
-    cp errfile errfile_apply_incr
-    if [[ $err != 0 ]]; then
-      echo "apply snow increment failed"
-      exit 10
-    fi
+  ${USHlandda}/add_sfc_increments.py --path_data "${DATA}" --fn_sfc_base "${fn_sfc_base}" --fn_inc_base "${fn_inc_base}"
+  export err=$?; err_chk
+  if [[ $err != 0 ]]; then
+    echo "adding snow increment failed"
+    exit 10
   fi
-
-  for itile in {1..6}
-  do
-    cp -p ${DATA}/${FILEDATE}.xainc.sfc_data.tile${itile}.nc ${COMOUT}
-  done
-
 fi 
 
 for itile in {1..6}
 do
-  cp -p ${DATA}/${FILEDATE}.sfc_data.tile${itile}.nc ${COMOUT}
+  cp -p ${DATA}/${FILEDATE}.sfc_data.tile${itile}_new.nc ${COMOUT}/${FILEDATE}.sfc_data.tile${itile}.nc
 done
 
 if [[ -d output/DA/hofx ]]; then

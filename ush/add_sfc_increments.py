@@ -19,12 +19,6 @@ import xarray as xr
 def add_sfc_increments():
 # =================================================================== CHJ =====
 
-    # sfc_data
-    path_data="/scratch2/NAGAPE/epic/Chan-hoo.Jeon/landda_test/ptmp/test/tmp/analysis.2000010400.61815352"
-    fn_sfc_base='20000104.000000.sfc_data_jedi.tile'
-    # increment files
-    fn_inc_base='20000104.000000.xainc.sfc_data.tile'
-
     # Number of tiles
     num_tiles=6
     # Number of decimal places to round to
@@ -86,7 +80,7 @@ def add_sfc_increments():
 
         # Replace sfc values with new ones
         sfc.variables[sfc_var_nm].values=sfc_var_orig_new
-        sfc.to_netcdf('new_file_tile'+str(itp)+'.nc')
+        sfc.to_netcdf(fn_sfc_base+str(itp)+'_new.nc')
 
     return True
 
