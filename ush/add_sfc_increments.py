@@ -27,6 +27,8 @@ def add_sfc_increments():
 
     # Number of tiles
     num_tiles=6
+    # Number of decimal places to round to
+    num_decimals=12
     # variable name to be extraced
     sfc_var_nm='snwdph'
 
@@ -42,6 +44,7 @@ def add_sfc_increments():
         #print(sfc)
         # Extract snow depth
         sfc_var_orig=np.ma.masked_invalid(sfc[sfc_var_nm].data)
+        sfc_var_orig=np.round(sfc_var_orig,decimals=num_decimals)
         sfc_var=np.squeeze(sfc_var_orig,axis=0)
         (nx_sfc,ny_sfc)=sfc_var.shape
 
@@ -54,6 +57,7 @@ def add_sfc_increments():
         #print(inc)
         # Extract snow depth
         sfc_inc_orig=np.ma.masked_invalid(inc[sfc_var_nm].data)
+        sfc_inc_orig=np.round(sfc_inc_orig,decimals=num_decimals)
         sfc_inc=np.squeeze(sfc_inc_orig,axis=(0,1))
         (nx_inc,ny_inc)=sfc_inc.shape
         
@@ -66,6 +70,7 @@ def add_sfc_increments():
 
         # check new values
         sfc_var_chk=sfc_var_new-sfc_inc
+        sfc_var_chk=np.round(sfc_var_chk,decimals=num_decimals)
         sfc_diff=np.absolute(sfc_var_chk-sfc_var)
         sfc_diff_max=np.max(sfc_diff)
         print("sfc_data diff check: max=",sfc_diff_max)
