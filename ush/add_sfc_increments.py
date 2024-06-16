@@ -16,7 +16,7 @@ import numpy as np
 import xarray as xr
 
 # Main part (will be called at the end) ============================= CHJ =====
-def add_sfc_increments():
+def add_sfc_increments(path_data,fn_sfc_base,fn_inc_base):
 # =================================================================== CHJ =====
 
     # Number of tiles
@@ -117,7 +117,7 @@ def parse_args(argv):
 if __name__=='__main__':
     args = parse_args(sys.argv[1:])
     add_sfc_increments(
-        path_data=args.path_data
-        fn_sfc_base=args.fn_sfc_base
+        path_data=args.path_data,
+        fn_sfc_base=args.fn_sfc_base,
         fn_inc_base=args.fn_inc_base       
     )   
