@@ -67,6 +67,7 @@ def add_sfc_increments():
 
         # new values
         sfc_var_new=sfc_var+sfc_inc
+        sfc_var_new=np.round(sfc_var_new,decimals=num_decimals)
 
         # check new values
         sfc_var_chk=sfc_var_new-sfc_inc
@@ -74,7 +75,7 @@ def add_sfc_increments():
         sfc_diff=np.absolute(sfc_var_chk-sfc_var)
         sfc_diff_max=np.max(sfc_diff)
         print("sfc_data diff check: max=",sfc_diff_max)
-        err_tol=1e-10
+        err_tol=1e-12
         if sfc_diff_max > err_tol:
             sys.exit('FATAL ERROR: new values are NOT correct !!!')
 
